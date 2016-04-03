@@ -1,0 +1,2 @@
+# Hamlet
+Haskell reversi engine
