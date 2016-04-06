@@ -24,7 +24,7 @@ showFv :: [Value]
 showFv = map (\x -> fv x) [0..7]
 
 fvbin :: BS.ByteString
-fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/FlatReversi/subproc/data"
+fvbin = unsafePerformIO $ BS.readFile "../../../subproc/data"
 
 randomUnsafeIO :: BitBoard.Bb -> Value
 randomUnsafeIO board = fromIntegral $ (truncate ((fromIntegral (BitBoard.hashFromBitBoard board) / 1000000000.0) *
