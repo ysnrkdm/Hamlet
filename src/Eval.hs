@@ -20,12 +20,15 @@ type Coef = Double
 fv :: Int -> Value
 fv i = (fromIntegral :: Int8 -> Value) . (fromIntegral :: Word8 -> Int8) $ BS.index fvbin i
 
+evalKind :: Value
+evalKind = (fromIntegral :: Int8 -> Value) . (fromIntegral :: Word8 -> Int8) $ BS.index fvbin 0
+
 showFv :: [Value]
-showFv = map (\x -> fv x) [0..7]
+showFv = map fv [0..7]
 
 fvbin :: BS.ByteString
--- fvbin = unsafePerformIO $ BS.readFile "../../../subproc/data"
-fvbin = unsafePerformIO $ BS.readFile "/home/ec2-user/projects/Hamlet/data"
+fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/FlatReversi/subproc/data"
+-- fvbin = unsafePerformIO $ BS.readFile "/home/ec2-user/projects/Hamlet/data"
 
 randomUnsafeIO :: BitBoard.Bb -> Value
 randomUnsafeIO board = fromIntegral $ (truncate ((fromIntegral (BitBoard.hashFromBitBoard board) / 1000000000.0) *
@@ -34,8 +37,9 @@ randomUnsafeIO board = fromIntegral $ (truncate ((fromIntegral (BitBoard.hashFro
 eval :: BitBoard.Bb -> Value
 eval board
     | BitBoard.isTerminal board = terminalValue board
-    | otherwise = staticEval board
--- trace (printf "eval: %s" $ show $ staticEval board) $
+    | otherwise = case evalKind of
+        0 -> staticEval board
+        _ -> 0.0
 
 terminalValue :: BitBoard.Bb -> Value
 terminalValue board@(BitBoard.Bb black white turn)
@@ -59,14 +63,14 @@ staticEval board = --trace (printf "random: %s" (show $ randomUnsafeIO board)) (
 position :: BitBoard.Bb -> Int -> Value
 position board@(BitBoard.Bb _ _ colour) progress = sum -- $ map fromIntegral
     [
-        (fv' 0) * boardMap 0x8100000000000081,      -- corner A
-        (fv' 1) * boardMap 0x4281000000008142,      -- corner neighbor H/V B
-        (fv' 2) * boardMap 0x0042000000004200,      -- corner neighbor diag C
-        (fv' 3) * boardMap 0x2400810000810024,      -- corner neighbors' neighbor D
-        (fv' 4) * boardMap 0x1800008181000018,      -- E
-        (fv' 5) * boardMap 0x003C424242423C00,      -- F
-        (fv' 6) * boardMap 0x0000240000240000,      -- G
-        (fv' 7) * boardMap 0x0000183C3C180000       -- H
+        (fv' 1) * boardMap 0x8100000000000081,      -- corner A
+        (fv' 2) * boardMap 0x4281000000008142,      -- corner neighbor H/V B
+        (fv' 3) * boardMap 0x0042000000004200,      -- corner neighbor diag C
+        (fv' 4) * boardMap 0x2400810000810024,      -- corner neighbors' neighbor D
+        (fv' 5) * boardMap 0x1800008181000018,      -- E
+        (fv' 6) * boardMap 0x003C424242423C00,      -- F
+        (fv' 7) * boardMap 0x0000240000240000,      -- G
+        (fv' 8) * boardMap 0x0000183C3C180000       -- H
     ]
     where
         boardMap bmap = fromIntegral $ BitBoard.getNumPiecesWithMaskFor board bmap colour
