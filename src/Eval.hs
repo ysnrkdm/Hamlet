@@ -27,8 +27,8 @@ showFv :: [Value]
 showFv = map fv [0..7]
 
 fvbin :: BS.ByteString
-fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/FlatReversi/subproc/data"
--- fvbin = unsafePerformIO $ BS.readFile "/home/ec2-user/projects/Hamlet/data"
+-- fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/FlatReversi/subproc/data"
+fvbin = unsafePerformIO $ BS.readFile "/home/ec2-user/projects/Hamlet/data"
 
 randomUnsafeIO :: BitBoard.Bb -> Value
 randomUnsafeIO board = fromIntegral $ (truncate ((fromIntegral (BitBoard.hashFromBitBoard board) / 1000000000.0) *
@@ -38,7 +38,8 @@ eval :: BitBoard.Bb -> Value
 eval board
     | BitBoard.isTerminal board = terminalValue board
     | otherwise = case evalKind of
-        0 -> staticEval board
+        0 -> staticPositionEvalNoPhase board
+        1 -> staticPositionEvalWPhase board
         _ -> 0.0
 
 terminalValue :: BitBoard.Bb -> Value
@@ -46,22 +47,29 @@ terminalValue board@(BitBoard.Bb black white turn)
     | BitBoard.isTerminal board = fromIntegral $ (BitBoard.getNumPiecesFor board turn) - (BitBoard.getNumPiecesFor board (BitBoard.oppositeSide turn))
     | otherwise = 0.0
 
-staticEval :: BitBoard.Bb -> Value
-staticEval board = --trace (printf "random: %s" (show $ randomUnsafeIO board)) (randomUnsafeIO board)
-    if progress < 24 then randomUnsafeIO board else
-    sum
-    [
-        position board progress
+staticPositionEvalNoPhase :: BitBoard.Bb -> Value
+staticPositionEvalNoPhase board = if progress < 24 then randomUnsafeIO board else position board 0 1
+    where progress = 60 - BitBoard.getNumVacant board
+
+staticPositionEvalWPhase :: BitBoard.Bb -> Value
+staticPositionEvalWPhase board = if progress < 24 then randomUnsafeIO board else position board progress 16
+    where progress = 60 - BitBoard.getNumVacant board
+
+-- staticEval :: BitBoard.Bb -> Value
+-- staticEval board = if progress < 24 then randomUnsafeIO board else
+--     sum
+--     [
+--         position board progress
 --         positionCoef progress * position board,
 --         opennessCoef progress * openness board,
 --         numPiecesCoef progress * numPieces board,
 --         possibleMovesCoef progress * possibleMoves board
-    ]
-    where
-        progress = 64 - BitBoard.getNumVacant board
+--     ]
+--     where
+--         progress = 64 - BitBoard.getNumVacant board
 
-position :: BitBoard.Bb -> Int -> Value
-position board@(BitBoard.Bb _ _ colour) progress = sum -- $ map fromIntegral
+position :: BitBoard.Bb -> Int -> Int -> Value
+position board@(BitBoard.Bb _ _ colour) progress divisor = sum -- $ map fromIntegral
     [
         (fv' 1) * boardMap 0x8100000000000081,      -- corner A
         (fv' 2) * boardMap 0x4281000000008142,      -- corner neighbor H/V B
@@ -74,8 +82,8 @@ position board@(BitBoard.Bb _ _ colour) progress = sum -- $ map fromIntegral
     ]
     where
         boardMap bmap = fromIntegral $ BitBoard.getNumPiecesWithMaskFor board bmap colour
-        p = progress `div` 15
-        fv' i = fv (i + p * 0)
+        p = progress `div` divisor
+        fv' i = fv (i + p * 8)
 
 -- positionCoef :: Int -> Coef
 -- positionCoef progress = 1.0 * [2, 4, 6, 8, 8] !! (coefIndex progress 15)
