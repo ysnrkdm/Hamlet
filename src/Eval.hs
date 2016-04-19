@@ -24,7 +24,11 @@ evalKind :: Value
 evalKind = (fromIntegral :: Int8 -> Value) . (fromIntegral :: Word8 -> Int8) $ BS.index fvbin 0
 
 showFv :: [Value]
-showFv = map fv [0..7]
+showFv =
+    case evalKind of
+        0 -> map fv [0..7]
+        1 -> map fv [0..31]
+        _ -> [0.0]
 
 fvbin :: BS.ByteString
 -- fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/FlatReversi/subproc/data"
