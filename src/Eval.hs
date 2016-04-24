@@ -26,8 +26,9 @@ evalKind = (fromIntegral :: Int8 -> Value) . (fromIntegral :: Word8 -> Int8) $ B
 showFv :: [Value]
 showFv =
     case evalKind of
-        0 -> map fv [0..7]
-        1 -> map fv [0..31]
+        0 -> map fv [0..8]
+        1 -> map fv [0..32]
+        2 -> map fv [0..36]
         _ -> [0.0]
 
 fvbin :: BS.ByteString
@@ -44,11 +45,12 @@ eval board
     | otherwise = case evalKind of
         0 -> staticPositionEvalNoPhase board
         1 -> staticPositionEvalWPhase board
+        2 -> staticPositionPossibleMovesEvalWPhase board
         _ -> 0.0
 
 terminalValue :: BitBoard.Bb -> Value
 terminalValue board@(BitBoard.Bb black white turn)
-    | BitBoard.isTerminal board = fromIntegral $ (BitBoard.getNumPiecesFor board turn) - (BitBoard.getNumPiecesFor board (BitBoard.oppositeSide turn))
+    | BitBoard.isTerminal board = fromIntegral $ BitBoard.getNumPiecesFor board turn - BitBoard.getNumPiecesFor board (BitBoard.oppositeSide turn)
     | otherwise = 0.0
 
 staticPositionEvalNoPhase :: BitBoard.Bb -> Value
@@ -58,6 +60,16 @@ staticPositionEvalNoPhase board = if progress < 24 then randomUnsafeIO board els
 staticPositionEvalWPhase :: BitBoard.Bb -> Value
 staticPositionEvalWPhase board = if progress < 24 then randomUnsafeIO board else position board progress 16
     where progress = 60 - BitBoard.getNumVacant board
+
+staticPositionPossibleMovesEvalWPhase :: BitBoard.Bb -> Value
+staticPositionPossibleMovesEvalWPhase board = if progress < 24 then randomUnsafeIO board else
+    sum
+    [
+        position board progress 16,
+        possibleMovesCoef progress * possibleMoves board
+    ]
+    where
+        progress = 64 - BitBoard.getNumVacant board
 
 -- staticEval :: BitBoard.Bb -> Value
 -- staticEval board = if progress < 24 then randomUnsafeIO board else
@@ -92,8 +104,8 @@ position board@(BitBoard.Bb _ _ colour) progress divisor = sum -- $ map fromInte
 -- positionCoef :: Int -> Coef
 -- positionCoef progress = 1.0 * [2, 4, 6, 8, 8] !! (coefIndex progress 15)
 --
--- coefIndex :: Int -> Int -> Int
--- coefIndex progress pPerBuckets = floor $ (fromIntegral progress) / (fromIntegral pPerBuckets)
+coefIndex :: Int -> Int -> Int
+coefIndex progress divisor = progress `div` divisor
 
 -- opennessCoef :: Int -> Coef
 -- opennessCoef progress = 1.0 * [8, 6, 6, 3, 3] !! (coefIndex progress 15)
@@ -101,8 +113,8 @@ position board@(BitBoard.Bb _ _ colour) progress divisor = sum -- $ map fromInte
 -- numPiecesCoef :: Int -> Coef
 -- numPiecesCoef progress = 1.0 * [0, 1, 50, 200, 9999] !! (coefIndex progress 15)
 --
--- possibleMovesCoef :: Int -> Coef
--- possibleMovesCoef progress = 1.0 * [20, 15, 3.2, 1.1, 1.1] !! (coefIndex progress 15)
+possibleMovesCoef :: Int -> Coef
+possibleMovesCoef progress = 1.0 * fv (1 + 32 + (coefIndex progress 16))
 --
 -- openness :: BitBoard.Bb -> Value
 -- openness board = opennessHelper board $ BitBoard.getBoardForTurn board
@@ -116,5 +128,5 @@ position board@(BitBoard.Bb _ _ colour) progress divisor = sum -- $ map fromInte
 -- numPieces :: BitBoard.Bb -> Value
 -- numPieces board = fromIntegral $ BitBoard.getNumPiecesFor board (BitBoard.turn board)
 --
--- possibleMoves :: BitBoard.Bb -> Value
--- possibleMoves board = fromIntegral $ BitBoard.getNumPuttablesFor board (BitBoard.turn board)
+possibleMoves :: BitBoard.Bb -> Value
+possibleMoves board = fromIntegral $ BitBoard.getNumPuttablesFor board (BitBoard.turn board)
