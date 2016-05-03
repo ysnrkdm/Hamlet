@@ -26,11 +26,13 @@ main = do
 --            ,bench "alphabeta 8 depth" $ whnf (Search.alphabeta 8) BitBoard.initialBoard
 --            ,bench "alphabeta 9 depth" $ whnf (Search.alphabeta 9) BitBoard.initialBoard
 --            ,bench "alphabeta 10 depth" $ whnf (Search.alphabeta 10) BitBoard.initialBoard
-            bench "pns 2 depth" $ whnf (ProofNumberSearch.proofNumberSearch Piece.B 10) $
-                BitBoard.fromString "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOXOXO---- O",
-            bench "pns 2 depth" $ whnf (ProofNumberSearch.proofNumberSearch Piece.B 10) $
-                BitBoard.fromString "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXOX-- O",
-            bench "pns 2 depth" $ whnf (ProofNumberSearch.proofNumberSearch Piece.B 10) $
-                BitBoard.fromString "OOOOOXO---OOOOO-XXOXXXXX-XXOOXXXXXXXXXXX-XOOOXXXX-OOOO----OOOOO- O"
+            bench "pns 2 depth" $ whnf (pns 15) "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOXOXO---- O",
+            bench "pns 2 depth" $ whnf (pns 15) "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXOX-- O",
+            bench "pns 2 depth" $ whnf (pns 15) "OOOOOXO---OOOOO-XXOXXXXX-XXOOXXXXXXXXXXX-XOOOXXXX-OOOO----OOOOO- O"
             ]
         ]
+
+pns q r = ProofNumberSearch.proofNumberSearch t q board
+    where
+        t = BitBoard.turn board
+        board = BitBoard.fromString r
