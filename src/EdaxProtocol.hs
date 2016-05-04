@@ -52,12 +52,11 @@ commandLoop mode bd = do
             case cmds !! 1 of
                 "1" -> (putStrLn $ show bd) >> (putStrLn "\n\n\n")
                 "0" -> putStr ""
-                "p" -> (putStrLn $ show Eval.showFv)
+                "p" -> putStrLn $ show Eval.showFv
                 _ -> putStr ""
-        "go" -> do
-            case mode of
+        "go" -> case mode of
                 (Search searchingmethod) -> do
-                    let (Search.Result _ pv) = Search.alphabeta 7 bd
+                    let (Search.Result _ pv) = Search.alphabetaWEndSolver 7 bd
                     case head pv of
                         Move.Nil -> do
                             putStrLn $ "\n\n>Hamlet plays PS"
