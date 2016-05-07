@@ -11,6 +11,7 @@ import qualified MoveGenerator
 import qualified Eval
 import qualified Tree
 import qualified ProofNumberSearch
+import qualified SlackMessenger
 -- GHC
 
 -- libraries
@@ -53,7 +54,7 @@ alphabeta depth = normalizeResult . maximum . Tree.maximize' . Tree.maptree ((Ev
 
 alphabetaWEndSolver :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
 alphabetaWEndSolver depth bb
-    | BitBoard.getNumVacant bb <= 10 = if va pnsRes > 0 then pnsRes else alphaRes
+    | BitBoard.getNumVacant bb <= 10 = if va pnsRes > 0 then SlackMessenger.unsafeSendMessageNow ("PNS Search: point" ++ show pnsRes ++ ".") pnsRes else alphaRes
     | otherwise = alphaRes
     where
         pnsRes = normalizeSolverResult (ProofNumberSearch.pnsSearch 10 bb)
@@ -67,7 +68,8 @@ normalizePNSValue val = case val of
     ProofNumberSearch.LeafProven -> 999
     ProofNumberSearch.LeafDisproven -> -999
     ProofNumberSearch.LeafUnknown -> 0
-    ProofNumberSearch.ProofDisproofNumber {ProofNumberSearch.proof = n, ProofNumberSearch.disproof = m} -> if n > m then 9999 else -9999
+    ProofNumberSearch.ProofDisproofNumber {ProofNumberSearch.proof = n, ProofNumberSearch.disproof = m} ->
+        if n > m then 9999 else -9999
 
 normalizeResult :: (Eval.Value, Result) -> Result
 normalizeResult (value, result) =
