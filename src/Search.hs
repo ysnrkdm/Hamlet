@@ -54,7 +54,10 @@ alphabeta depth = normalizeResult . maximum . Tree.maximize' . Tree.maptree ((Ev
 
 alphabetaWEndSolver :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
 alphabetaWEndSolver depth bb
-    | BitBoard.getNumVacant bb <= 10 = if va pnsRes > 0 then SlackMessenger.unsafeSendMessageNow ("PNS Search: point" ++ show pnsRes ++ ".") pnsRes else alphaRes
+    | BitBoard.getNumVacant bb <= 10 =
+        if va pnsRes > 0 then
+            SlackMessenger.unsafeSendMessageNow ("PNS Search success!: " ++ show pnsRes ++ ".") pnsRes else
+            SlackMessenger.unsafeSendMessageNow ("PNS Search failed!: " ++ show pnsRes ++ ".") alphaRes
     | otherwise = alphaRes
     where
         pnsRes = normalizeSolverResult (ProofNumberSearch.pnsSearch 10 bb)
