@@ -57,7 +57,7 @@ alphabetaWEndSolver depth bb
     | BitBoard.getNumVacant bb <= 10 =
         if va pnsRes > 0 then
             SlackMessenger.unsafeSendMessageNow ("PNS Search success!: " ++ show pnsRes ++ ".") pnsRes else
-            SlackMessenger.unsafeSendMessageNow ("PNS Search failed!: " ++ show pnsRes ++ ".") alphaRes
+            alphaRes
     | otherwise = alphaRes
     where
         pnsRes = normalizeSolverResult (ProofNumberSearch.pnsSearch 10 bb)
