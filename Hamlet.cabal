@@ -14,7 +14,8 @@ executable Hamlet
                     regex-base,
                     regex-posix,
                     random,
-                    http-conduit
+                    http-conduit,
+                    aeson
 
 --executable Learn
 --  main-is:          Main.hs
@@ -49,7 +50,8 @@ executable searchBench
                     test-framework,
                     test-framework-hunit,
                     criterion,
-                    http-conduit
+                    http-conduit,
+                    aeson
 
 executable HamletTest
   main-is:          Main.hs
@@ -64,7 +66,8 @@ executable HamletTest
                     test-framework,
                     test-framework-hunit,
                     criterion,
-                    http-conduit
+                    http-conduit,
+                    aeson
 
 Test-Suite Test
   type:             exitcode-stdio-1.0
@@ -80,4 +83,5 @@ Test-Suite Test
                     test-framework,
                     test-framework-hunit,
                     criterion,
-                    http-conduit
+                    http-conduit,
+                    aeson
