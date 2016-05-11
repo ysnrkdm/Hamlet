@@ -50,7 +50,7 @@ commandLoop mode bd = do
         "redo" -> putStrLn "redo (Not yet implemented)"
         "verbose" ->
             case cmds !! 1 of
-                "1" -> (putStrLn $ show bd) >> (putStrLn "\n\n\n")
+                "1" -> putStrLn (show bd) >> putStrLn "\n\n\n"
                 "0" -> putStr ""
                 "p" -> putStrLn $ show Eval.showFv
                 _ -> putStr ""
@@ -59,18 +59,17 @@ commandLoop mode bd = do
                     let (Search.Result _ pv) = Search.alphabetaWEndSolver 7 bd
                     case head pv of
                         Move.Nil -> do
-                            putStrLn $ "\n\n>Hamlet plays PS"
+                            putStrLn "\n\n>Hamlet plays PS"
                             commandLoop mode $ BitBoard.move bd (head pv)
                         _ -> do
-                            putStrLn $ "\n\n>Hamlet plays " ++ (show $ head pv)
+                            putStrLn $ "\n\n>Hamlet plays " ++ show (head pv)
                             commandLoop mode $ BitBoard.move bd (head pv)
-                (Learn learningmethod) -> do
-                    putStrLn $ "Not yet supported"
+                (Learn learningmethod) -> putStrLn "Not yet supported"
         _   | isMove $ head cmds -> do
-                putStrLn $ "\n\nYou play " ++ (head cmds)
+                putStrLn $ "\n\nYou play " ++ head cmds
                 commandLoop mode $ BitBoard.moveByPos bd (Util.posFromUSI (head cmds))
             | isPass $ head cmds -> do
-                putStrLn $ "\n\nYou play PS"
+                putStrLn "\n\nYou play PS"
                 commandLoop mode $ BitBoard.move bd Move.Nil
             | otherwise -> putStrLn ("undefined command.." ++ sfens)
     commandLoop mode bd -- next
