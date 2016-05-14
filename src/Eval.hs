@@ -54,11 +54,11 @@ terminalValue board@(BitBoard.Bb black white turn)
     | otherwise = 0.0
 
 staticPositionEvalNoPhase :: BitBoard.Bb -> Value
-staticPositionEvalNoPhase board = if progress < 24 then randomUnsafeIO board else position board 0 1
+staticPositionEvalNoPhase board = if progress < 8 then randomUnsafeIO board else position board 0 1
     where progress = 60 - BitBoard.getNumVacant board
 
 staticPositionEvalWPhase :: BitBoard.Bb -> Value
-staticPositionEvalWPhase board = if progress < 24 then randomUnsafeIO board else position board progress 16
+staticPositionEvalWPhase board = if progress < 8 then randomUnsafeIO board else position board progress 16
     where progress = 60 - BitBoard.getNumVacant board
 
 staticPositionPossibleMovesEvalWPhase :: BitBoard.Bb -> Value
