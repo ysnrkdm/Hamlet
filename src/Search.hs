@@ -30,13 +30,6 @@ instance Show Result where
 conv :: Move.Mv -> Result -> Result
 conv mv res = Result (-va res) (mv : pv res)
 
---minmax :: Int -> BitBoard.Bb -> Result
---minmax 0 bd = Result (Eval.eval bd) []
---minmax dep bd = maximumBy (compare `on` va) nexts
---    where
---        nexts = map next $ MoveGenerator.moveGenerationFull bd
---        next mv = conv mv . minmax (dep - 1) $ BitBoard.move bd mv
-
 moves :: (BitBoard.Bb, Result) -> [(BitBoard.Bb, Result)]
 moves (bd, result) =
     map (\ x -> (BitBoard.move bd x, conv x result)) $ MoveGenerator.moveGenerationFull bd
@@ -44,12 +37,7 @@ moves (bd, result) =
 gametree :: BitBoard.Bb -> Tree.Tree (BitBoard.Bb, Result)
 gametree p = Tree.reptree moves (p, Result 0 [])
 
---evaluate :: BitBoard.Bb -> Eval.Value
---evaluate = Tree.maximize . Tree.maptree (Eval.eval . fst) . (Tree.prune 3) . gametree
-
--- alphabeta
 alphabeta :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
--- alphabeta depth = normalizeResult . maximum . Tree.maximize' . Tree.maptree (\x -> ((Eval.eval . fst) x, snd x)) . (Tree.prune depth) . gametree
 alphabeta depth = normalizeResult . maximum . Tree.maximize' . Tree.maptree ((Eval.eval . fst) &&& snd) . Tree.prune depth . gametree
 
 alphabetaWEndSolver :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
