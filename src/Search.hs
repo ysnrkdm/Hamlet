@@ -37,18 +37,20 @@ moves (bd, result) =
 gametree :: BitBoard.Bb -> Tree.Tree (BitBoard.Bb, Result)
 gametree p = Tree.reptree moves (p, Result 0 [])
 
+-- alphabeta
 alphabeta :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
 alphabeta depth = normalizeResult . maximum . Tree.maximize' . Tree.maptree ((Eval.eval . fst) &&& snd) . Tree.prune depth . gametree
 
 alphabetaWEndSolver :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
 alphabetaWEndSolver depth bb
-    | BitBoard.getNumVacant bb <= 10 =
+    | BitBoard.getNumVacant bb <= pnsDepth =
         if va pnsRes > 0 then
             SlackMessenger.unsafeSendMessageNow ("PNS Search success!: " ++ show pnsRes ++ ".") pnsRes else
             alphaRes
     | otherwise = alphaRes
     where
-        pnsRes = normalizeSolverResult (ProofNumberSearch.pnsSearch 10 bb)
+        pnsDepth = 10
+        pnsRes = normalizeSolverResult (ProofNumberSearch.pnsSearch pnsDepth bb)
         alphaRes = alphabeta depth bb
 
 normalizeSolverResult :: ProofNumberSearch.Result -> Result
