@@ -33,7 +33,7 @@ showFv =
 
 fvbin :: BS.ByteString
 -- fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/FlatReversi/subproc/data"
-fvbin = unsafePerformIO $ BS.readFile "/home/ec2-user/projects/Hamlet/data"
+fvbin = unsafePerformIO $ BS.readFile "/home/ubuntu/projects/Hamlet/data"
 
 randomUnsafeIO :: BitBoard.Bb -> Value
 randomUnsafeIO board = fromIntegral $ (truncate ((fromIntegral (BitBoard.hashFromBitBoard board) / 1000000000.0) *
