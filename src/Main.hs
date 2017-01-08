@@ -1,21 +1,16 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+-- {-# LANGUAGE ForeignFunctionInterface #-}
 module Main where
-import Control.Monad
-import Data.Word
+-- import Data.Word
 import qualified EdaxProtocol
 
---import qualified ProofNumberSearch
-import qualified Dfpn
-
-import Control.Applicative
 import System.IO
 
-foreign export ccall search :: Word64 -> Word64 -> Int -> Int -> IO Int
-
-search :: Word64 -> Word64 -> Int -> Int -> IO Int
-search black white pnsLessThan searchDepth = do
-    putStrLn "Called!"
-    return $ 10 + 10
+-- foreign export ccall search :: Word64 -> Word64 -> Int -> Int -> IO Int
+--
+-- search :: Word64 -> Word64 -> Int -> Int -> IO Int
+-- search black white pnsLessThan searchDepth = do
+--     putStrLn "Called!"
+--     return $ 10 + 10
 
 main :: IO ()
 main = do

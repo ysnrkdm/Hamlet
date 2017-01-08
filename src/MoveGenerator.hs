@@ -3,7 +3,6 @@ module MoveGenerator where
 import qualified BitBoard
 import qualified Move
 import qualified Piece
-import Debug.Trace
 
 moveGenerationFull :: BitBoard.Bb -> [Move.Mv]
 moveGenerationFull bb = moveGenerationHelper colour $ BitBoard.getBoardPuttables bb

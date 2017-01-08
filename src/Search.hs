@@ -17,10 +17,6 @@ import qualified SlackMessenger
 -- libraries
 
 -- std
-import Data.Function
-import Data.List
-import Data.Ord
-import Debug.Trace
 import Control.Arrow
 
 data Result = Result {va :: Eval.Value, pv :: [Move.Mv]} deriving (Eq, Ord)
@@ -28,7 +24,7 @@ instance Show Result where
     show (Result va pv) = "va: " ++ show va ++ ", pv : " ++ show pv
 
 conv :: Move.Mv -> Result -> Result
-conv mv res = Result (-va res) (mv : pv res)
+conv mv res = Result (va res) (mv : pv res)
 
 moves :: (BitBoard.Bb, Result) -> [(BitBoard.Bb, Result)]
 moves (bd, result) =
@@ -39,7 +35,7 @@ gametree p = Tree.reptree moves (p, Result 0 [])
 
 -- alphabeta
 alphabeta :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
-alphabeta depth = normalizeResult . maximum . Tree.maximize' . Tree.maptree ((Eval.eval . fst) &&& snd) . Tree.prune depth . gametree
+alphabeta depth = normalizeResult . minimum . Tree.minimize' . Tree.maptree ((Eval.eval . fst) &&& snd) . Tree.prune depth . gametree
 
 alphabetaWEndSolver :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
 alphabetaWEndSolver depth bb

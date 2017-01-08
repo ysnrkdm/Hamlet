@@ -7,10 +7,10 @@ import qualified Util
 import Data.Word
 import Data.Bits
 import Data.Bits.Extras
-import Data.Char
 import Control.Exception
 import Data.List(foldl')
 import Debug.Trace
+import Text.Printf
 
 type BitBoard = Word64
 emptyBoard :: BitBoard
@@ -19,19 +19,22 @@ emptyBoard = 0
 data Bb = Bb {black :: BitBoard, white :: BitBoard, turn :: Piece.Co}
 
 instance Show Bb where
-    show bb = showBitBoards bb
+    show = showBitBoards
 
-showBitBoards :: Bb -> String
-showBitBoards bb@(Bb _ _ turn) =
+showBitBoards bb = showBitBoardsInner bb True
+showBitBoardsWOGuides bb = showBitBoardsInner bb False
+
+showBitBoardsInner :: Bb -> Bool -> String
+showBitBoardsInner bb@(Bb _ _ turn) showGuides =
     "Turn : " ++ (if turn == Piece.B then "Black" else "White") ++
     ", Empties : " ++ (show (getNumVacant bb)) ++
         "\r\n  A B C D E F G H" ++
-        showBitBoardsHelper bb puttables (8*8-1)
+        showBitBoardsHelper bb puttables (8*8-1) showGuides
         where puttables = getPuttables bb turn
 
-showBitBoardsHelper _ _ (-1) = ""
-showBitBoardsHelper bb@(Bb black white turn) puttables n =
-    a ++ markAtN ++ (showBitBoardsHelper bb puttables (n-1))
+showBitBoardsHelper _ _ (-1) _ = ""
+showBitBoardsHelper bb@(Bb black white turn) puttables n showGuides =
+    a ++ markAtN ++ (showBitBoardsHelper bb puttables (n-1) showGuides)
         where
             markAtN =
                 case blackBitAtN == 0 && whiteBitAtN == 0 && puttablesBitAtN == 0 of
@@ -39,11 +42,12 @@ showBitBoardsHelper bb@(Bb black white turn) puttables n =
                     False
                         | blackBitAtN > 0 -> "O "
                         | whiteBitAtN > 0 -> "@ "
-                        | puttablesBitAtN > 0 && turn == Piece.B -> "b "
-                        | puttablesBitAtN > 0 && turn == Piece.W -> "w "
-            blackBitAtN = (black .&. (bit (63 - n)))
-            whiteBitAtN = (white .&. (bit (63 - n)))
-            puttablesBitAtN = (puttables .&. (bit (63 - n)))
+                        | showGuides && puttablesBitAtN > 0 && turn == Piece.B -> "b "
+                        | showGuides && puttablesBitAtN > 0 && turn == Piece.W -> "w "
+                        | otherwise -> "- "
+            blackBitAtN = black .&. (bit (63 - n))
+            whiteBitAtN = white .&. (bit (63 - n))
+            puttablesBitAtN = puttables .&. (bit (63 - n))
             a = if (mod (n+1) 8) == 0 then "\r\n" ++ (show $ 8 - (n `div` 8)) ++ " " else ""
 
 showBitBoard :: BitBoard -> String
@@ -54,18 +58,18 @@ showBitBoard bb =
 
 showBitBoardHelper _ (-1) = ""
 showBitBoardHelper bb n =
-        case blackBitAtN == 0 of
-            True -> a ++ " - " ++ (showBitBoardHelper bb (n-1))
-            False -> a ++ " O " ++ (showBitBoardHelper bb (n-1))
+        if blackBitAtN == 0 then
+            a ++ " - " ++ (showBitBoardHelper bb (n-1)) else
+            a ++ " O " ++ (showBitBoardHelper bb (n-1))
         where
-            blackBitAtN = (bb .&. (bit (63 - n)))
+            blackBitAtN = bb .&. (bit (63 - n))
             a = if (mod (n+1) 8) == 0 then "\r\n" ++ (show $ 8 - (n `div` 8)) ++ " " ++ (show $ 8 - (n `div` 8) - 1) ++ " " else ""
 
 fromString :: String -> Bb
 fromString str =
     Bb (black obb) (white obb) turn
     where
-        obb = fromStringHelper str initialBoard 0
+        obb = fromStringHelper str zeroBoard 0
         turn =
             case str !! 65 of
                 '@' -> Piece.W
@@ -85,10 +89,36 @@ fromStringHelper (hd:rest) bb pos =
         'X' -> fromStringHelper rest (set bb (Piece.Pc Piece.W) pos) (pos+1)
         _ -> fromStringHelper rest bb pos
 
+toString :: Bb -> String
+toString bb = toStringHelper bb (8*8-1)
+
+toStringHelper :: Bb -> Int -> String
+toStringHelper (Bb _ _ turn) (-1) = " " ++ (
+    case turn of
+        Piece.B -> "O"
+        Piece.W -> "X"
+    )
+
+toStringHelper bb@(Bb black white turn) n =
+    markAtN ++ toStringHelper bb (n-1)
+    where
+        markAtN =
+            case blackBitAtN == 0 && whiteBitAtN == 0 of
+                True -> "-"
+                False
+                    | blackBitAtN > 0 -> "O"
+                    | whiteBitAtN > 0 -> "X"
+                    | otherwise -> "-"
+        blackBitAtN = black .&. (bit (63 - n))
+        whiteBitAtN = white .&. (bit (63 - n))
+
 data Mvs = Mvs {moves :: BitBoard}
 
 initialBoard :: Bb
-initialBoard = (Bb 0x0000000810000000 0x0000001008000000 Piece.B)
+initialBoard = Bb 0x0000000810000000 0x0000001008000000 Piece.B
+
+zeroBoard :: Bb
+zeroBoard = Bb 0x0 0x0 Piece.B
 
 --height :: Int
 --height = 8
@@ -128,8 +158,10 @@ set (Bb black white turn) Piece.Empty pos =
     where b = bitwhere pos
 
 get :: Bb -> Piece.Pos -> Piece.Pc
-get bb@(Bb black white turn) pos =
-    if blackExists then (Piece.Pc Piece.B) else if whiteExists then (Piece.Pc Piece.W) else (Piece.Empty)
+get bb@(Bb black white turn) pos
+    | blackExists = Piece.Pc Piece.B
+    | whiteExists = Piece.Pc Piece.W
+    | otherwise = Piece.Empty
     where
         b = bitwhere $ assert (withinBoard bb pos) pos
         blackExists = black .&. b > 0
@@ -304,38 +336,38 @@ canPutMove bb (Move.Mv pos (Piece.Pc colour)) = (isEmptyAt bb pos) && ((getPutta
 
 numPeripherals :: Bb -> Piece.Pc -> Piece.Pos -> Int
 numPeripherals (Bb black white _) piece pos =
-    popCount $ table
+    popCount table
     where
         table = case piece of
             Piece.Pc Piece.B -> black .&. peripherals
             Piece.Pc Piece.W -> white .&. peripherals
-            Piece.Empty -> (black .|. white) `xor` 0xFFFFFFFFFFFFFFFF
+            Piece.Empty -> ((black .|. white) `xor` 0xFFFFFFFFFFFFFFFF) .&. peripherals
         peripherals = peripherals_xxs .&. ((bitwhere pos) `xor` 0xFFFFFFFFFFFFFFFF)
         (x, y) = Util.coordFromPos pos
         peripherals_xxs = case y of
-            0 -> peripherals_x `shiftL` 8 + peripherals_x
-            1 -> peripherals_xs
-            2 -> peripherals_xs `shiftL` (8 * 1)
-            3 -> peripherals_xs `shiftL` (8 * 2)
-            4 -> peripherals_xs `shiftL` (8 * 3)
-            5 -> peripherals_xs `shiftL` (8 * 4)
-            6 -> peripherals_xs `shiftL` (8 * 5)
-            7 -> peripherals_xs `shiftL` (8 * 6)
+            1 -> peripherals_x `shiftL` 8 + peripherals_x
+            2 -> peripherals_xs
+            3 -> peripherals_xs `shiftL` (8 * 1)
+            4 -> peripherals_xs `shiftL` (8 * 2)
+            5 -> peripherals_xs `shiftL` (8 * 3)
+            6 -> peripherals_xs `shiftL` (8 * 4)
+            7 -> peripherals_xs `shiftL` (8 * 5)
+            8 -> peripherals_xs `shiftL` (8 * 6)
         peripherals_xs = peripherals_x `shiftL` 16 + peripherals_x `shiftL` 8 + peripherals_x
         peripherals_x = case x of
-            0 -> 0x03 -- 0b00000011
-            1 -> 0x07 -- 0b00000111
-            2 -> 0x0E -- 0b00001110
-            3 -> 0x1C -- 0b00011100
-            4 -> 0x38 -- 0b00111000
-            5 -> 0x70 -- 0b01110000
-            6 -> 0xE0 -- 0b11100000
-            7 -> 0xC0 -- 0b11000000
+            1 -> 0x03 -- 0b0000_0011
+            2 -> 0x07 -- 0b0000_0111
+            3 -> 0x0E -- 0b0000_1110
+            4 -> 0x1C -- 0b0001_1100
+            5 -> 0x38 -- 0b0011_1000
+            6 -> 0x70 -- 0b0111_0000
+            7 -> 0xE0 -- 0b1110_0000
+            8 -> 0xC0 -- 0b1100_0000
 
 move :: BitBoard.Bb -> Move.Mv -> BitBoard.Bb
 move bb (Move.Mv to piece) = fst $ put bb piece to
 move bb@(Bb black white turn) Move.Nil =
-    ((Bb black white (if turn == Piece.B then Piece.W else Piece.B)))
+    Bb black white (if turn == Piece.B then Piece.W else Piece.B)
 
 moveByPos :: BitBoard.Bb -> Piece.Pos -> BitBoard.Bb
 moveByPos bb@(Bb black white turn) to = fst $ put bb (Piece.Pc turn) to
@@ -349,6 +381,41 @@ takeOneAndSetZero bb =
     where
         mssb = takeOneFromBitBoard bb
         newBb = bb `xor` (bitwhere mssb)
+
+pack :: BitBoard -> BitPattern8
+pack bb = w8 bbShifted
+    where
+        bbShifted = bb `shiftR` (shift bb)
+        shift 0 = 0
+        shift x = rank x - 1
+
+type BitPattern8 = Word8
+
+rowOf :: BitBoard -> Int -> BitPattern8
+rowOf bb row = pack q
+    where
+        q = bb .&. (0xFF `shiftL` (8*(row-1)))
+
+colOf :: BitBoard -> Int -> BitPattern8
+colOf bb col = rowOf (transpose bb) col
+
+transpose :: BitBoard -> BitBoard
+transpose bb = z where
+    x =
+        bb `shiftL` 1 .&. 0xAA00AA00AA00AA00 .|.
+        bb `shiftR` 1 .&. 0x0055005500550055 .|.
+        bb `shiftR` 8 .&. 0x00AA00AA00AA00AA .|.
+        bb `shiftL` 8 .&. 0x5500550055005500
+    y =
+        x `shiftL`  2 .&. 0xCCCC0000CCCC0000 .|.
+        x `shiftR`  2 .&. 0x0000333300003333 .|.
+        x `shiftR` 16 .&. 0x0000CCCC0000CCCC .|.
+        x `shiftL` 16 .&. 0x3333000033330000
+    z =
+        y `shiftL`  4 .&. 0xF0F0F0F000000000 .|.
+        y `shiftR`  4 .&. 0x000000000F0F0F0F .|.
+        y `shiftR` 32 .&. 0x00000000F0F0F0F0 .|.
+        y `shiftL` 32 .&. 0x0F0F0F0F00000000
 
 hashFromBitBoard :: BitBoard.Bb -> Integer
 hashFromBitBoard bb = (fromIntegral (black bb)) * 2^64 + (fromIntegral (white bb))

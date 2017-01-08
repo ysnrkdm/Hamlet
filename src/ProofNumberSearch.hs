@@ -3,10 +3,8 @@ module ProofNumberSearch where
 import qualified Move
 import qualified BitBoard
 import qualified Piece
-import Control.Monad
 import qualified Util
 import qualified Tree
-import Debug.Trace
 import Data.Ord
 import Data.List
 import qualified MoveGenerator

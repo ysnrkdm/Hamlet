@@ -1,9 +1,7 @@
 module Tree where
 
-import Data.Function
 import Data.List
 import Data.Ord
-import Debug.Trace
 
 
 data Tree n = Node {node :: n, childNodes :: [Tree n]} deriving (Show)

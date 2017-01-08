@@ -5,9 +5,7 @@ module SlackMessenger where
 import Network.HTTP.Conduit
 import qualified Data.ByteString.Lazy as L
 import System.IO.Unsafe
-import Data.ByteString.Char8
 import Data.Aeson
-import Control.Applicative
 
 data Payload = Payload { test :: String } deriving Show
 instance FromJSON Payload where
