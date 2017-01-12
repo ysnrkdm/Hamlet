@@ -11,7 +11,7 @@ import qualified MoveGenerator
 import qualified Eval
 import qualified Tree
 import qualified ProofNumberSearch
-import qualified SlackMessenger
+-- import qualified SlackMessenger
 -- GHC
 
 -- libraries
@@ -41,7 +41,8 @@ alphabetaWEndSolver :: (Num a, Eq a) => a -> BitBoard.Bb -> Result
 alphabetaWEndSolver depth bb
     | BitBoard.getNumVacant bb <= pnsDepth =
         if va pnsRes > 0 then
-            SlackMessenger.unsafeSendMessageNow ("PNS Search success!: " ++ show pnsRes ++ ".") pnsRes else
+--             SlackMessenger.unsafeSendMessageNow ("PNS Search success!: " ++ show pnsRes ++ ".")
+            pnsRes else
             alphaRes
     | otherwise = alphaRes
     where

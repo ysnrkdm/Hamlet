@@ -13,7 +13,7 @@ import qualified Move
 import qualified Search
 import qualified Util
 import qualified Eval
-import qualified SlackMessenger
+-- import qualified SlackMessenger
 
 -- GHC
 
@@ -65,10 +65,12 @@ commandLoop mode bd = do
                 _ -> putStr ""
         "go" -> case mode of
                 (Search searchingmethod) -> do
-                    let res@(Search.Result _ pv) = case searchingmethod of
+                    let (Search.Result _ pv) = case searchingmethod of
                             AlphaBeta -> Search.alphabeta 7 bd
                             AlphaBetaWPNS -> Search.alphabetaWEndSolver 7 bd
-                    case SlackMessenger.unsafeSendMessageNow (printf "%s" (show res)) head pv of
+                    case
+--                         SlackMessenger.unsafeSendMessageNow (printf "%s" (show res))
+                        head pv of
                         Move.Nil -> do
                             putStrLn "\n\n>Hamlet plays PS"
                             commandLoop mode $ BitBoard.move bd (head pv)

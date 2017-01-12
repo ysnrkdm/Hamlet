@@ -6,13 +6,9 @@ import qualified Data.ByteString as BS
 import Data.Int
 import Data.Word
 import System.IO.Unsafe
--- import System.Random
--- import Debug.Trace
--- import Text.Printf
 
 -- should be removed later, moved to BitBoard.hs
 import Data.Bits
--- import Data.Bits.Extras
 
 type Value = Double
 type Coef = Double
