@@ -1,5 +1,6 @@
 module EdaxProtocol (
     commandLoop,
+    evalHelper,
     SearchingMethod(..),
     LearningMethod(..),
     Mode(..)
@@ -41,6 +42,11 @@ data LearningMethod = TDLambda
 data Mode =
       Search { searchingmethod :: SearchingMethod }
     | Learn { learningmethod :: LearningMethod }
+
+evalHelper sfenstring =
+    Eval.eval bb
+    where
+     bb = BitBoard.fromString sfenstring
 
 commandLoop mode bd = do
     sfens <- getLine
