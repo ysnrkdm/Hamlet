@@ -37,37 +37,37 @@ executable Hamlet
 --                    regex-base,
 --                    regex-posix
 --
-executable searchBench
-  main-is:          Main.hs
-  hs-source-dirs:   src/bench,
-                    src
-  ghc-options:      -O2 -fprof-auto
-  build-depends:    base,
-                    bits,
-                    regex-base,
-                    regex-posix,
-                    HUnit,
-                    test-framework,
-                    test-framework-hunit,
-                    criterion,
-                    http-conduit,
-                    aeson
-
-executable HamletTest
-  main-is:          Main.hs
-  hs-source-dirs:   src/test,
-                    src
-  ghc-options:      -O2 -fprof-auto
-  build-depends:    base,
-                    bits,
-                    regex-base,
-                    regex-posix,
-                    HUnit,
-                    test-framework,
-                    test-framework-hunit,
-                    criterion,
-                    http-conduit,
-                    aeson
+--executable searchBench
+--  main-is:          Main.hs
+--  hs-source-dirs:   src/bench,
+--                    src
+--  ghc-options:      -O2 -fprof-auto
+--  build-depends:    base,
+--                    bits,
+--                    regex-base,
+--                    regex-posix,
+--                    HUnit,
+--                    test-framework,
+--                    test-framework-hunit,
+--                    criterion,
+--                    http-conduit,
+--                    aeson
+--
+--executable HamletTest
+--  main-is:          Main.hs
+--  hs-source-dirs:   src/test,
+--                    src
+--  ghc-options:      -O2 -fprof-auto
+--  build-depends:    base,
+--                    bits,
+--                    regex-base,
+--                    regex-posix,
+--                    HUnit,
+--                    test-framework,
+--                    test-framework-hunit,
+--                    criterion,
+--                    http-conduit,
+--                    aeson
 
 Test-Suite Test
   type:             exitcode-stdio-1.0

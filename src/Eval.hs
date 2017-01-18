@@ -47,10 +47,6 @@ fvbin :: BS.ByteString
 fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/Hamlet/data"
 -- fvbin = unsafePerformIO $ BS.readFile "/home/ubuntu/projects/Hamlet/data"
 
--- randomUnsafeIO :: BitBoard.Bb -> Value
--- randomUnsafeIO board = fromIntegral $ (truncate ((fromIntegral (BitBoard.hashFromBitBoard board) / 1000000000.0) *
---     (unsafePerformIO $ (randomRIO (0, 100) :: IO Double)))) `mod` 99907
-
 eval :: BitBoard.Bb -> Value
 eval board
     | BitBoard.isTerminal board = terminalValue board
