@@ -44,8 +44,8 @@ showFv =
 
 {-# NOINLINE fvbin #-}
 fvbin :: BS.ByteString
-fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/Hamlet/data"
--- fvbin = unsafePerformIO $ BS.readFile "/home/ubuntu/projects/Hamlet/data"
+-- fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/Hamlet/data"
+fvbin = unsafePerformIO $ BS.readFile "/home/ubuntu/projects/Hamlet/data"
 
 eval :: BitBoard.Bb -> Value
 eval board
