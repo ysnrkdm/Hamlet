@@ -1,6 +1,7 @@
 module EdaxProtocol (
     commandLoop,
     evalHelper,
+    hashHelper,
     SearchingMethod(..),
     LearningMethod(..),
     Mode(..)
@@ -47,6 +48,11 @@ evalHelper sfenstring =
     Eval.eval bb
     where
      bb = BitBoard.fromString sfenstring
+
+hashHelper sfenstring =
+    Eval.factorFromBoard bb
+    where
+    bb = BitBoard.fromString sfenstring
 
 commandLoop mode bd = do
     sfens <- getLine

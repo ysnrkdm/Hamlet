@@ -5,6 +5,7 @@ import qualified BitBoard
 import qualified Data.ByteString as BS
 import Data.Int
 import Data.Word
+import qualified Data.Vector.Unboxed as V ((++), zipWith, fromList, toList, sum, Vector)
 import System.IO.Unsafe
 
 -- should be removed later, moved to BitBoard.hs
@@ -42,6 +43,9 @@ showFv =
             ]
         _ -> [[0.0]]
 
+factorFromBoard :: BitBoard.Bb -> [Value]
+factorFromBoard board = V.toList $ staticEvalFactorVector board
+
 {-# NOINLINE fvbin #-}
 fvbin :: BS.ByteString
 -- fvbin = unsafePerformIO $ BS.readFile "/Users/Yoshinori/Documents/OneDrive/codes/Hamlet/data"
@@ -51,8 +55,8 @@ eval :: BitBoard.Bb -> Value
 eval board
     | BitBoard.isTerminal board = terminalValue board
     | otherwise = case evalKind of
-        0 -> staticPositionEvalNoPhase board
-        1 -> staticPositionEvalWPhase board
+--         0 -> staticPositionEvalNoPhase board
+--         1 -> staticPositionEvalWPhase board
 --         2 -> staticPositionPossibleMovesEvalWPhase board
         2 -> staticEval board
         _ -> 0.0
@@ -62,50 +66,93 @@ terminalValue board@(BitBoard.Bb _ _ turn)
     | BitBoard.isTerminal board = fromIntegral $ BitBoard.getNumPiecesFor board turn - BitBoard.getNumPiecesFor board (BitBoard.oppositeSide turn)
     | otherwise = 0.0
 
-staticPositionEvalNoPhase :: BitBoard.Bb -> Value
-staticPositionEvalNoPhase board = position board 0 1
+-- staticPositionEvalNoPhase :: BitBoard.Bb -> Value
+-- staticPositionEvalNoPhase board = position board 0 1
+--
+-- staticPositionEvalWPhase :: BitBoard.Bb -> Value
+-- staticPositionEvalWPhase board = position board progress 16
+--     where progress = 60 - BitBoard.getNumVacant board
+--
+-- staticPositionPossibleMovesEvalWPhase :: BitBoard.Bb -> Value
+-- staticPositionPossibleMovesEvalWPhase board = sum
+--     [
+--         position board progress 16,
+--         possibleMovesCoef progress * possibleMoves board
+--     ]
+--     where
+--         progress = 64 - BitBoard.getNumVacant board
 
-staticPositionEvalWPhase :: BitBoard.Bb -> Value
-staticPositionEvalWPhase board = position board progress 16
-    where progress = 60 - BitBoard.getNumVacant board
+(.*) :: V.Vector Double -> V.Vector Double -> V.Vector Double
+x .* y = V.zipWith (*) x y
 
-staticPositionPossibleMovesEvalWPhase :: BitBoard.Bb -> Value
-staticPositionPossibleMovesEvalWPhase board = sum
-    [
-        position board progress 16,
-        possibleMovesCoef progress * possibleMoves board
-    ]
-    where
-        progress = 64 - BitBoard.getNumVacant board
+(+++) :: V.Vector Double -> V.Vector Double -> V.Vector Double
+x +++ y = (V.++) x y
 
 staticEval :: BitBoard.Bb -> Value
-staticEval board = sum
-    [
-        possibleMovesCoef progress * possibleMoves board,
-        edgeCoef progress * edge board,
-        fixedPiecesCoef progress * fixedPieces board,
-        opennessCoef progress * openness board,
-        position board progress 16
+staticEval board = V.sum $ coef .* value
+    where
+        coef = staticEvalCoefVector board
+        value = staticEvalFactorVector board
+-- staticEval board = sum
+--     [
+--         possibleMovesCoef progress * possibleMoves board,
+--         edgeCoef progress * edge board,
+--         fixedPiecesCoef progress * fixedPieces board,
+--         opennessCoef progress * openness board,
+--         position board progress 16
+--     ]
+--     where
+--         progress = 64 - BitBoard.getNumVacant board
+
+staticEvalFactorVector :: BitBoard.Bb -> V.Vector Value
+staticEvalFactorVector board = positionFactorVector board +++ V.fromList [
+        possibleMoves board, edge board, fixedPieces board, openness board
+    ]
+
+staticEvalCoefVector :: BitBoard.Bb -> V.Vector Value
+staticEvalCoefVector board = positionCoefVector progress divisor +++ V.fromList [
+        possibleMovesCoef progress, edgeCoef progress, fixedPiecesCoef progress, opennessCoef progress
     ]
     where
         progress = 64 - BitBoard.getNumVacant board
+        divisor = 16
 
-position :: BitBoard.Bb -> Int -> Int -> Value
-position board@(BitBoard.Bb _ _ colour) progress divisor = sum -- $ map fromIntegral
+positionFactorVector :: BitBoard.Bb -> V.Vector Value
+positionFactorVector board@(BitBoard.Bb _ _ colour) = V.fromList
     [
-        fv' 1 * boardMap 0x8100000000000081,      -- corner A
-        fv' 2 * boardMap 0x4281000000008142,      -- corner neighbor H/V B
-        fv' 3 * boardMap 0x0042000000004200,      -- corner neighbor diag C
-        fv' 4 * boardMap 0x2400810000810024,      -- corner neighbors' neighbor D
-        fv' 5 * boardMap 0x1800008181000018,      -- E
-        fv' 6 * boardMap 0x003C424242423C00,      -- F
-        fv' 7 * boardMap 0x0000240000240000,      -- G
-        fv' 8 * boardMap 0x0000183C3C180000       -- H
+        boardMap 0x8100000000000081,      -- corner A
+        boardMap 0x4281000000008142,      -- corner neighbor H/V B
+        boardMap 0x0042000000004200,      -- corner neighbor diag C
+        boardMap 0x2400810000810024,      -- corner neighbors' neighbor D
+        boardMap 0x1800008181000018,      -- E
+        boardMap 0x003C424242423C00,      -- F
+        boardMap 0x0000240000240000,      -- G
+        boardMap 0x0000183C3C180000       -- H
     ]
     where
-        boardMap bmap = fromIntegral $ BitBoard.getNumPiecesWithMaskFor board bmap colour
+            boardMap bmap = fromIntegral $ BitBoard.getNumPiecesWithMaskFor board bmap colour
+
+positionCoefVector progress divisor = V.fromList $ map (\x -> fv' x) [1..8]
+    where
         p = coefIndex progress divisor
         fv' i = fv (i + p * 8)
+
+-- position :: BitBoard.Bb -> Int -> Int -> Value
+-- position board@(BitBoard.Bb _ _ colour) progress divisor = sum -- $ map fromIntegral
+--     [
+--         fv' 1 * boardMap 0x8100000000000081,      -- corner A
+--         fv' 2 * boardMap 0x4281000000008142,      -- corner neighbor H/V B
+--         fv' 3 * boardMap 0x0042000000004200,      -- corner neighbor diag C
+--         fv' 4 * boardMap 0x2400810000810024,      -- corner neighbors' neighbor D
+--         fv' 5 * boardMap 0x1800008181000018,      -- E
+--         fv' 6 * boardMap 0x003C424242423C00,      -- F
+--         fv' 7 * boardMap 0x0000240000240000,      -- G
+--         fv' 8 * boardMap 0x0000183C3C180000       -- H
+--     ]
+--     where
+--         boardMap bmap = fromIntegral $ BitBoard.getNumPiecesWithMaskFor board bmap colour
+--         p = coefIndex progress divisor
+--         fv' i = fv (i + p * 8)
 
 coefIndex :: Int -> Int -> Int
 coefIndex progress divisor = progress `div` divisor

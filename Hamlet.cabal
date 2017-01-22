@@ -10,6 +10,7 @@ executable Hamlet
   ghc-options:      -W -O2 -fexpose-all-unfoldings -flate-dmd-anal -fregs-iterative
   build-depends:    base,
                     bits,
+                    vector,
                     bytestring,
                     regex-base,
                     regex-posix,

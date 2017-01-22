@@ -7,6 +7,7 @@ import qualified EdaxProtocol
 import System.IO
 import System.Environment(getArgs, getProgName)
 import System.Console.GetOpt
+import Text.Printf
 
 -- foreign export ccall search :: Word64 -> Word64 -> Int -> Int -> IO Int
 --
@@ -15,37 +16,42 @@ import System.Console.GetOpt
 --     putStrLn "Called!"
 --     return $ 10 + 10
 
-data Options = Options {optEval :: String} deriving Show
+data HamletOptions = EvalOptions String | HashOptions String deriving Show
 
-defaultOptions = Options {optEval = ""}
+defaultOptions = EvalOptions ""
 
-options :: [OptDescr (Options -> Options)]
+options :: [OptDescr HamletOptions]
 options =
-  [ Option ['e'] ["eval"]
-      (ReqArg (\g opts -> opts { optEval = g }) "\"----O-X------X-----XXXO-OXXXXXOO-XXOOXOOXXOXXXOO--OOOO-O----OO-- O\"")
-      "Eval given board and turn in SFEN"
+  [
+    Option ['e'] ["eval"]
+        (ReqArg EvalOptions "SFEN")
+        "Eval given board and turn in SFEN",
+    Option ['h'] ["hash"]
+        (ReqArg HashOptions "SFEN")
+        "Show hash of given board factors"
   ]
 
-parseArgs :: IO Options
-parseArgs = do
-    argv <- getArgs
-    progName <- getProgName
+compilerOpts :: [String] -> String -> IO ([HamletOptions], [String])
+compilerOpts argv progName =
     case getOpt Permute options argv of
-        (opts, [], []) -> return (foldl (flip id) defaultOptions opts)
-        (_, _, errs) -> ioError (userError (concat errs ++ helpMessage))
-            where
-                header = "Usage: " ++ progName ++ " [OPTION...]"
-                helpMessage = usageInfo header options
+        (o,n,[]  ) -> return (o,n)
+        (_,_,errs) -> ioError (userError (concat errs ++ usageInfo header options))
+    where header = printf "Usage: %s [OPTION...]\n SFEN exmple: %s" progName
+                        "\"----O-X------X-----XXXO-OXXXXXOO-XXOOXOOXXOXXXOO--OOOO-O----OO-- O\""
 
 main :: IO ()
 main = do
-    options <- parseArgs
---     putStrLn $ show options
---     putStrLn $ show $ optEval options
-    case optEval options of
-        "" -> do
-            hSetBuffering stdin NoBuffering
-            hSetBuffering stdout NoBuffering
-            EdaxProtocol.commandLoop (EdaxProtocol.Search EdaxProtocol.AlphaBeta) undefined
-        _ -> do
-            putStrLn $ show $ EdaxProtocol.evalHelper (optEval options)
+    argv <- getArgs
+    progName <- getProgName
+    (options, _) <- compilerOpts argv progName
+    case length options of
+        0 -> startEdaxLoop
+        _ -> case head options of
+            EvalOptions s -> printf "%s\n" $ show $ EdaxProtocol.evalHelper s
+            HashOptions s -> printf "%s\n" $ show $ EdaxProtocol.hashHelper s
+            _ -> startEdaxLoop
+
+startEdaxLoop = do
+    hSetBuffering stdin NoBuffering
+    hSetBuffering stdout NoBuffering
+    EdaxProtocol.commandLoop (EdaxProtocol.Search EdaxProtocol.AlphaBeta) undefined
